@@ -1,0 +1,1582 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JUNGLE RUN: Misi Energi</title>
+    <style>
+        /* --- STYLES & THEME --- */
+        :root {
+            --bg-dark-green: #0a1f0c;
+            --jungle-accent: #ffd700;
+            --p1-color: #ef4444;
+            --p2-color: #3b82f6;
+            --card-bg: rgba(20, 35, 22, 0.92);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: manipulation;
+        }
+
+        body {
+            background-color: var(--bg-dark-green);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #app-container {
+            width: 100vw;
+            height: 100vh;
+            max-width: 900px;
+            max-height: 950px;
+            background: #000;
+            position: relative;
+            box-shadow: 0 0 30px rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top Bar Navigation & Stats */
+        .top-bar {
+            background: rgba(0, 0, 0, 0.75);
+            color: #fff;
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 20;
+            border-bottom: 2px solid var(--jungle-accent);
+            backdrop-filter: blur(4px);
+        }
+
+        .mute-btn, .perf-btn {
+            background: #2a3a2c;
+            color: #fff;
+            border: 1px solid #5a7a5e;
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: bold;
+        }
+
+        /* Screen Wrapper */
+        .screen {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            padding: 15px;
+            z-index: 10;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* Buttons & Forms */
+        .btn {
+            background: linear-gradient(to bottom, #facc15, #ca8a04);
+            color: #000;
+            font-weight: bold;
+            font-size: 1.1rem;
+            padding: 12px 20px;
+            border: 2px solid #fff;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+            text-align: center;
+            margin: 5px 0;
+            text-transform: uppercase;
+        }
+
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+        }
+
+        .btn-red {
+            background: linear-gradient(to bottom, #f87171, #dc2626);
+            color: white;
+        }
+
+        .btn-blue {
+            background: linear-gradient(to bottom, #60a5fa, #2563eb);
+            color: white;
+        }
+
+        .input-group {
+            margin: 10px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            text-align: left;
+        }
+
+        .input-group label {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .input-control {
+            padding: 12px;
+            border-radius: 8px;
+            border: 2px solid #4a6b4e;
+            background: #0f1c10;
+            color: #fff;
+            font-size: 1.1rem;
+            width: 100%;
+            outline: none;
+        }
+
+        .input-control:focus {
+            border-color: var(--jungle-accent);
+        }
+
+        /* Card Overlay Panels */
+        .card {
+            background: var(--card-bg);
+            border: 2px solid #3d5e40;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            text-align: center;
+            margin: auto 0;
+            backdrop-filter: blur(6px);
+        }
+
+        /* Canvas Pseudo-3D Game View */
+        #game-view-container {
+            position: relative;
+            flex: 1;
+            width: 100%;
+            background: #000;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #game-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Touch Control Buttons for HP */
+        .mobile-controls {
+            position: absolute;
+            bottom: 10px;
+            left: 0; right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            pointer-events: none;
+            z-index: 15;
+        }
+
+        .ctrl-btn {
+            pointer-events: auto;
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            background: rgba(255, 215, 0, 0.35);
+            border: 2px solid #ffd700;
+            color: #fff;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        .ctrl-btn:active {
+            background: rgba(255, 215, 0, 0.7);
+        }
+
+        /* Question Overlay Panel at Bottom */
+        .question-panel {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            background: rgba(10, 25, 12, 0.95);
+            border-top: 3px solid var(--jungle-accent);
+            padding: 15px;
+            border-radius: 20px 20px 0 0;
+            z-index: 30;
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.8);
+            max-height: 55%;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        /* Red Vignette Danger Overlay */
+        .danger-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 12;
+            box-shadow: inset 0 0 50px rgba(255, 0, 0, 0.8);
+            animation: pulseRed 1s infinite alternate;
+            display: none;
+        }
+
+        @keyframes pulseRed {
+            0% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+        .shake-screen {
+            animation: shake 0.4s infinite;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(2px, 1px) rotate(0deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            40% { transform: translate(1px, -2px) rotate(-1deg); }
+            60% { transform: translate(-2px, 1px) rotate(0deg); }
+            80% { transform: translate(2px, -1px) rotate(1deg); }
+            100% { transform: translate(1px, 2px) rotate(0deg); }
+        }
+
+        /* Game Title & Story */
+        .game-title {
+            color: #ffd700;
+            font-size: 2.2rem;
+            text-shadow: 3px 3px 0 #000, -2px -2px 0 #000;
+            margin-bottom: 10px;
+        }
+
+        .story-box {
+            background: rgba(0,0,0,0.5);
+            color: #d1fae5;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            margin-bottom: 15px;
+            line-height: 1.4;
+            border-left: 4px solid var(--jungle-accent);
+        }
+
+        .eval-box {
+            text-align: left;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+        }
+
+        .eval-box.correct { background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; }
+        .eval-box.wrong { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .badge-success { background-color: #22c55e; }
+        .badge-danger { background-color: #ef4444; }
+
+        /* Confetti Effect */
+        .confetti-wrapper {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            overflow: hidden;
+        }
+
+        .confetti-piece {
+            position: absolute;
+            width: 10px; height: 10px;
+            background: #ffd700;
+            top: -10px;
+            opacity: 0.8;
+            animation: fall 3s linear infinite;
+        }
+
+        @keyframes fall {
+            to { transform: translateY(100vh) rotate(360deg); }
+        }
+
+        /* Table Summary */
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 0.85rem;
+            color: #fff;
+        }
+
+        .summary-table th, .summary-table td {
+            border: 1px solid #3d5e40;
+            padding: 6px;
+            text-align: left;
+        }
+
+        .summary-table th {
+            background-color: #1b381e;
+            color: #ffd700;
+        }
+
+        .flex-row { display: flex; gap: 10px; }
+        .flex-1 { flex: 1; }
+        .mt-10 { margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+    <!-- Top Bar Navigation -->
+    <div class="top-bar">
+        <div id="top-title" style="font-weight: bold; color: var(--jungle-accent);">🏛️ TEMPLE RUN: ENERGI</div>
+        <div id="hud-stats" style="display: flex; gap: 12px; font-size: 0.95rem; align-items: center;">
+            <!-- HUD elements updated dynamically -->
+        </div>
+        <div style="display: flex; gap: 6px;">
+            <button class="perf-btn" id="perf-btn" onclick="togglePerformanceMode()" title="Mode Hemat Animasi">⚡ Low</button>
+            <button class="mute-btn" id="mute-btn" onclick="toggleAudio()" title="Bisu/Suara">🔊</button>
+        </div>
+    </div>
+
+    <!-- Red Danger Overlay for Monster Proximity -->
+    <div id="danger-overlay" class="danger-overlay"></div>
+
+    <!-- ================= 1. MENU AWAL ================= -->
+    <div id="screen-menu" class="screen active">
+        <div class="card">
+            <h1 class="game-title">JUNGLE RUN<br><span style="font-size:1.2rem; color:#a7f3d0;">Misi Energi (IPA Kelas 8)</span></h1>
+            <div class="story-box">
+                Lari dari kejaran penjaga kuil raksasa! Lewati 3 jalur candi, kumpulkan koin emas, dan selesaikan 5 gerbang teka-teki Energi Potensial & Kinetik!
+            </div>
+
+            <div id="menu-selection">
+                <button class="btn" style="width: 100%;" onclick="showForm('solo')">MODE SOLO (1 Pemain)</button>
+                <button class="btn btn-blue" style="width: 100%; margin-top: 10px;" onclick="showForm('duel')">MODE DUEL (2 Pemain)</button>
+            </div>
+
+            <!-- Solo Form -->
+            <div id="form-solo" style="display: none;" class="mt-10">
+                <div class="input-group">
+                    <label for="p1-name">Nama Petualang:</label>
+                    <input type="text" id="p1-name" class="input-control" placeholder="Masukkan nama..." value="Petualang">
+                </div>
+                <div class="flex-row">
+                    <button class="btn btn-red flex-1" onclick="resetMenu()">KEMBALI</button>
+                    <button class="btn flex-1" onclick="startSoloGame()">MULAI PETUALANGAN</button>
+                </div>
+            </div>
+
+            <!-- Duel Form -->
+            <div id="form-duel" style="display: none;" class="mt-10">
+                <div class="input-group">
+                    <label for="duel-p1-name" style="color:#ef4444;">Nama Pemain 1 (Merah):</label>
+                    <input type="text" id="duel-p1-name" class="input-control" placeholder="Pemain 1" value="Pemain 1">
+                </div>
+                <div class="input-group">
+                    <label for="duel-p2-name" style="color:#60a5fa;">Nama Pemain 2 (Biru):</label>
+                    <input type="text" id="duel-p2-name" class="input-control" placeholder="Pemain 2" value="Pemain 2">
+                </div>
+                <div class="flex-row">
+                    <button class="btn btn-red flex-1" onclick="resetMenu()">KEMBALI</button>
+                    <button class="btn btn-blue flex-1" onclick="startDuelGame()">MULAI DUEL</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 2. CANVAS RUNNER GAME VIEW ================= -->
+    <div id="screen-game" class="screen" style="padding: 0; overflow: hidden;">
+        <div id="game-view-container">
+            <canvas id="game-canvas"></canvas>
+
+            <!-- Touch Controls for Mobile -->
+            <div class="mobile-controls" id="mobile-controls">
+                <div class="ctrl-btn" id="btn-left">◀</div>
+                <div class="ctrl-btn" id="btn-right">▶</div>
+            </div>
+
+            <!-- Question Overlay Panel -->
+            <div id="question-panel" class="question-panel" style="display: none;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span id="q-mission-badge" style="font-weight: bold; color: #ffd700;">MISI 1/5</span>
+                    <span id="q-combo-badge" style="font-weight: bold; color: #f97316;"></span>
+                </div>
+                <div class="q-text" id="q-text" style="color: #fff; font-size: 1.1rem; font-weight: 600; margin-bottom: 10px;">
+                    Soal teka-teki energi...
+                </div>
+
+                <form id="q-form" onsubmit="handleAnswerSubmit(event)">
+                    <div class="input-group">
+                        <input type="text" id="q-input" class="input-control" placeholder="Ketik jawabanmu..." autocomplete="off">
+                    </div>
+                    <button type="submit" id="q-submit-btn" class="btn" style="width: 100%;">JAWAB</button>
+                </form>
+
+                <!-- Evaluation / Explanation Box inside panel -->
+                <div id="eval-content" style="display: none;">
+                    <div id="eval-box" class="eval-box">
+                        <div id="eval-title" class="badge">BENAR!</div>
+                        <div id="eval-msg" style="font-weight: bold; margin-bottom: 4px;"></div>
+                        <div id="eval-desc" style="font-size: 0.9rem; color: #d1fae5; margin-bottom: 10px;"></div>
+                    </div>
+                    <button class="btn" style="width: 100%; margin-top: 8px;" id="eval-next-btn" onclick="advanceSegment()">LANJUT BERLARI 🏃</button>
+                </div>
+            </div>
+
+            <!-- Duel Handoff Screen Overlay -->
+            <div id="duel-handoff-overlay" class="card" style="display: none; position: absolute; z-index: 40; top: 15%; left: 5%; right: 5%;">
+                <h2 style="color: #ffd700; margin-bottom: 10px;">SERAHKAN PERANGKAT</h2>
+                <p id="handoff-msg" style="margin-bottom: 15px; font-size: 1.1rem; color: #e2e8f0;"></p>
+                <button class="btn btn-blue" style="width: 100%; font-size: 1.3rem;" onclick="confirmReadyHandoff()">SAYA SIAP!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 3. FINISH / RESULT SCREEN ================= -->
+    <div id="screen-result" class="screen">
+        <div class="card">
+            <h1 id="res-title" style="font-size: 2rem; color: #ca8a04;">MISI BERHASIL!</h1>
+            <div id="res-stars" style="font-size: 2.5rem; margin: 5px 0;">⭐⭐⭐</div>
+            <div id="res-subtitle" style="font-size: 1.1rem; font-weight: bold; color: #e2e8f0; margin-bottom: 10px;"></div>
+
+            <div id="res-details" style="text-align: left; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #3d5e40;">
+                <!-- Result details -->
+            </div>
+
+            <!-- Detailed Summary Table -->
+            <div style="max-height: 180px; overflow-y: auto; margin-bottom: 10px;">
+                <table class="summary-table">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Soal</th>
+                            <th>Hasil</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summary-table-body">
+                        <!-- Dynamic content -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="result-buttons-container" class="flex-row">
+                <!-- Action Buttons -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confetti Canvas/Container -->
+<div class="confetti-wrapper" id="confetti-holder"></div>
+
+<script>
+/* ==========================================================================
+   BANK SOAL & GAME DATA
+   ========================================================================== */
+const BANK_SOAL = [
+    { id: 1, soal: "Energi yang dimiliki benda karena geraknya disebut energi ........", jawaban: ["kinetik"], pembahasan: "Benda yang bergerak memiliki energi kinetik." },
+    { id: 2, soal: "Energi yang dimiliki benda karena kedudukan atau ketinggiannya terhadap permukaan tanah disebut energi ........", jawaban: ["potensial", "potensial gravitasi"], pembahasan: "Makin tinggi kedudukan benda, makin besar energi potensialnya." },
+    { id: 3, soal: "Rumus energi potensial gravitasi adalah Ep = ........", jawaban: ["m x g x h", "mgh", "m.g.h", "m*g*h"], pembahasan: "Ep = massa x percepatan gravitasi x tinggi." },
+    { id: 4, soal: "Satuan energi dalam Sistem Internasional (SI) adalah ........", jawaban: ["joule", "j"], pembahasan: "Satuan energi adalah joule (J)." },
+    { id: 5, soal: "Rumus energi kinetik adalah Ek = ........", jawaban: ["1/2 x m x v2", "1/2 m v^2", "1/2 mv^2", "0,5 x m x v^2", "setengah m v kuadrat"], pembahasan: "Ek = setengah x massa x kecepatan kuadrat." },
+    { id: 6, soal: "Buah kelapa yang masih tergantung di pohon memiliki energi ........", jawaban: ["potensial", "energi potensial"], pembahasan: "Kelapa berada di ketinggian tertentu dan diam, jadi punya energi potensial." },
+    { id: 7, soal: "Mobil yang melaju di jalan raya memiliki energi ........", jawaban: ["kinetik", "energi kinetik"], pembahasan: "Mobil bergerak, jadi punya energi kinetik." },
+    { id: 8, soal: "Jika massa sebuah benda dijadikan 2 kali semula dan ketinggiannya tetap, energi potensialnya menjadi ........ kali semula.", jawaban: ["2", "dua"], pembahasan: "Ep sebanding dengan massa, massa 2x maka Ep 2x." },
+    { id: 9, soal: "Jika kecepatan sebuah benda dijadikan 2 kali semula dan massanya tetap, energi kinetiknya menjadi ........ kali semula.", jawaban: ["4", "empat"], pembahasan: "Ek sebanding dengan kecepatan kuadrat, 2 kuadrat = 4." },
+    { id: 10, soal: "Sebuah mangga jatuh dari pohon. Selama jatuh, energi potensialnya ........ dan energi kinetiknya ........ (jawab dua kata, pisahkan koma)", jawaban: ["berkurang, bertambah", "menurun, meningkat", "berkurang, naik"], pembahasan: "Saat jatuh, ketinggian turun (Ep berkurang) dan kecepatan naik (Ek bertambah)." },
+    { id: 11, soal: "Bola dilempar vertikal ke atas. Di titik tertingginya, energi kinetik bola bernilai ........ dan energi potensialnya mencapai nilai ........ (jawab two kata, pisahkan koma)", jawaban: ["nol, maksimum", "0, maksimum", "minimum, maksimum", "nol, maksimal", "0, maksimal", "nol, tertinggi"], pembahasan: "Di titik tertinggi bola berhenti sesaat (Ek = 0) dan ketinggian maksimum (Ep maksimum)." },
+    { id: 12, soal: "Pernyataan bahwa energi tidak dapat diciptakan maupun dimusnahkan, tetapi hanya dapat berubah bentuk, disebut hukum ........", jawaban: ["kekekalan energi", "hukum kekekalan energi"], pembahasan: "Energi hanya berubah bentuk, jumlah totalnya tetap." },
+    { id: 13, soal: "Batu bermassa 2 kg berada pada ketinggian 5 m. Energi potensial batu adalah ........ J.", jawaban: ["100"], pembahasan: "Ep = 2 x 10 x 5 = 100 J." },
+    { id: 14, soal: "Buku bermassa 0,5 kg diletakkan di atas rak setinggi 2 m. Energi potensial buku adalah ........ J.", jawaban: ["10"], pembahasan: "Ep = 0,5 x 10 x 2 = 10 J." },
+    { id: 15, soal: "Benda bermassa 3 kg berada pada ketinggian 4 m. Energi potensialnya adalah ........ J.", jawaban: ["120"], pembahasan: "Ep = 3 x 10 x 4 = 120 J." },
+    { id: 16, soal: "Bola bermassa 2 kg bergerak dengan kecepatan 3 m/s. Energi kinetik bola adalah ........ J.", jawaban: ["9"], pembahasan: "Ek = 1/2 x 2 x 3^2 = 9 J." },
+    { id: 17, soal: "Sepeda dan pengendaranya bermassa 50 kg bergerak dengan kecepatan 4 m/s. Energi kinetiknya adalah ........ J.", jawaban: ["400"], pembahasan: "Ek = 1/2 x 50 x 4^2 = 400 J." },
+    { id: 18, soal: "Benda bermassa 4 kg bergerak dengan kecepatan 5 m/s. Energi kinetiknya adalah ........ J.", jawaban: ["50"], pembahasan: "Ek = 1/2 x 4 x 5^2 = 50 J." },
+    { id: 19, soal: "Benda bermassa 4 kg memiliki energi potensial 200 J. Ketinggian benda tersebut adalah ........ m.", jawaban: ["5"], pembahasan: "h = Ep : (m x g) = 200 : (4 x 10) = 5 m." },
+    { id: 20, soal: "Benda bermassa 2 kg memiliki energi kinetik 100 J. Kecepatan benda tersebut adalah ........ m/s.", jawaban: ["10"], pembahasan: "v^2 = 2 x Ek : m = 2 x 100 : 2 = 100, maka v = 10 m/s." }
+];
+
+/* Global Game Engine State */
+let gameState = {
+    mode: 'solo',
+    audioMuted: false,
+    lowPerf: false,
+    questions: [],
+    currentIndex: 0,
+    p1: { name: "Pemain 1", lives: 3, coins: 0, score: 0, combo: 0, isCaught: false, history: [], shirtColor: '#dc2626' },
+    p2: { name: "Pemain 2", lives: 3, coins: 0, score: 0, combo: 0, isCaught: false, history: [], shirtColor: '#2563eb' },
+    activePlayer: 1,
+    phase: 'RUNNING', // RUNNING, STOPPING_AT_GATE, AT_GATE, EVALUATING, FINISHED
+    duelTurn: 1,
+    tempP1Answer: "",
+    segmentTimer: 0,
+    lane: 0, // -1 (left), 0 (center), 1 (right)
+    targetLane: 0,
+    runnerX: 0,
+    distanceZ: 0,
+    runnerStumble: false,
+    runnerJump: false,
+    stumbleTimer: 0
+};
+
+/* Pseudo-3D Engine Data */
+let canvas, ctx;
+let cameraZ = 0;
+let speed = 0;
+const MAX_SPEED = 18;
+let roadObjects = [];
+let gateDistanceZ = 2000;
+let animFrameId = null;
+
+/* Audio Context */
+let audioCtx = null;
+
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+}
+
+function playSound(type) {
+    if (gameState.audioMuted) return;
+    try {
+        initAudio();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+
+        if (type === 'coin') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(987.77, now); // B5
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+            osc.start(now); osc.stop(now + 0.15);
+        } else if (type === 'correct') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(523.25, now);
+            osc.frequency.setValueAtTime(659.25, now + 0.1);
+            osc.frequency.setValueAtTime(783.99, now + 0.2);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            osc.start(now); osc.stop(now + 0.4);
+        } else if (type === 'wrong') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(160, now);
+            osc.frequency.linearRampToValueAtTime(70, now + 0.4);
+            gain.gain.setValueAtTime(0.4, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            osc.start(now); osc.stop(now + 0.4);
+        } else if (type === 'win') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(523.25, now);
+            osc.frequency.setValueAtTime(659.25, now + 0.15);
+            osc.frequency.setValueAtTime(783.99, now + 0.3);
+            osc.frequency.setValueAtTime(1046.50, now + 0.45);
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+            osc.start(now); osc.stop(now + 0.8);
+        }
+    } catch(e){}
+}
+
+function toggleAudio() {
+    gameState.audioMuted = !gameState.audioMuted;
+    document.getElementById('mute-btn').innerText = gameState.audioMuted ? "🔇 Bisu" : "🔊 Suara";
+}
+
+function togglePerformanceMode() {
+    gameState.lowPerf = !gameState.lowPerf;
+    const btn = document.getElementById('perf-btn');
+    btn.innerText = gameState.lowPerf ? "⚡ High" : "⚡ Low";
+    btn.style.background = gameState.lowPerf ? "#ca8a04" : "#2a3a2c";
+}
+
+/* ==========================================================================
+   NORMALIZATION & HELPERS
+   ========================================================================== */
+function shuffleArray(arr) {
+    const res = [...arr];
+    for (let i = res.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [res[i], res[j]] = [res[j], res[i]];
+    }
+    return res;
+}
+
+function normalizeStr(str) {
+    return str.toString().toLowerCase().replace(/,/g, '.').replace(/\s+/g, ' ').trim();
+}
+
+function checkAnswer(userAns, acceptables, isTwoParts = false) {
+    if (!userAns) return false;
+
+    if (isTwoParts) {
+        const parts = userAns.split(',').map(s => normalizeStr(s));
+        if (parts.length < 2) return false;
+        return acceptables.some(acc => {
+            const accParts = acc.split(',').map(s => normalizeStr(s));
+            return accParts.length === 2 && parts[0] === accParts[0] && parts[1] === accParts[1];
+        });
+    }
+
+    const normInput = normalizeStr(userAns);
+    const numMatch = normInput.match(/^[-+]?\d*\.?\d+/);
+    const extractedNum = numMatch ? numMatch[0] : null;
+
+    return acceptables.some(target => {
+        const normTarget = normalizeStr(target);
+        if (normInput === normTarget) return true;
+
+        const targetNumMatch = normTarget.match(/^[-+]?\d*\.?\d+/);
+        if (extractedNum && targetNumMatch && extractedNum === targetNumMatch[0]) return true;
+
+        const cleanInput = normInput.replace(/[x\*]/g, '').replace(/\s+/g, '');
+        const cleanTarget = normTarget.replace(/[x\*]/g, '').replace(/\s+/g, '');
+        return cleanInput === cleanTarget;
+    });
+}
+
+function getTitleByCoins(coins) {
+    if (coins <= 5) return "Penjelajah Pemula 🌿";
+    if (coins <= 12) return "Pemburu Harta 🪙";
+    return "Raja Hutan 👑";
+}
+
+/* ==========================================================================
+   UI SCREENS & NAVIGATION
+   ========================================================================== */
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+function showForm(mode) {
+    document.getElementById('menu-selection').style.display = 'none';
+    if (mode === 'solo') {
+        document.getElementById('form-solo').style.display = 'block';
+    } else {
+        document.getElementById('form-duel').style.display = 'block';
+    }
+}
+
+function resetMenu() {
+    document.getElementById('menu-selection').style.display = 'block';
+    document.getElementById('form-solo').style.display = 'none';
+    document.getElementById('form-duel').style.display = 'none';
+}
+
+function updateHUD() {
+    const hud = document.getElementById('hud-stats');
+    const overlay = document.getElementById('danger-overlay');
+    const container = document.getElementById('app-container');
+
+    if (gameState.mode === 'solo') {
+        const p = gameState.p1;
+        let hearts = "❤️".repeat(p.lives) + "🖤".repeat(3 - p.lives);
+        hud.innerHTML = `<span>${hearts}</span> <span>🪙 ${p.coins}</span> <span>Poin: ${p.score}</span>`;
+        
+        // Danger Vignette
+        if (p.lives === 1) {
+            overlay.style.display = 'block';
+            container.classList.add('shake-screen');
+        } else {
+            overlay.style.display = 'none';
+            container.classList.remove('shake-screen');
+        }
+    } else {
+        // Duel Mode HUD
+        const p1 = gameState.p1;
+        const p2 = gameState.p2;
+        const curP = gameState.activePlayer === 1 ? p1 : p2;
+
+        hud.innerHTML = `
+            <span style="color:#fca5a5; font-size:0.85rem;">P1: ${"❤️".repeat(p1.lives)} 🪙${p1.coins}</span> | 
+            <span style="color:#93c5fd; font-size:0.85rem;">P2: ${"❤️".repeat(p2.lives)} 🪙${p2.coins}</span>
+        `;
+
+        if (curP.lives === 1) {
+            overlay.style.display = 'block';
+        } else {
+            overlay.style.display = 'none';
+        }
+    }
+}
+
+/* ==========================================================================
+   PSEUDO-3D CANVAS ENGINE (TEMPLE RUN STYLE)
+   ========================================================================== */
+function initCanvas() {
+    canvas = document.getElementById('game-canvas');
+    ctx = canvas.getContext('2d');
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Setup Input Controls
+    setupInputListeners();
+}
+
+function resizeCanvas() {
+    if (!canvas) return;
+    const parent = canvas.parentElement;
+    canvas.width = parent.clientWidth;
+    canvas.height = parent.clientHeight;
+}
+
+function setupInputListeners() {
+    // Keyboard
+    window.addEventListener('keydown', (e) => {
+        if (gameState.phase !== 'RUNNING') return;
+        if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+            moveRunnerLane(-1);
+        } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+            moveRunnerLane(1);
+        }
+    });
+
+    // Touch Buttons
+    document.getElementById('btn-left').onclick = (e) => { e.stopPropagation(); moveRunnerLane(-1); };
+    document.getElementById('btn-right').onclick = (e) => { e.stopPropagation(); moveRunnerLane(1); };
+
+    // Mobile Swipe Gesture
+    let touchStartX = 0;
+    const viewContainer = document.getElementById('game-view-container');
+    viewContainer.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+    }, {passive: true});
+
+    viewContainer.addEventListener('touchend', (e) => {
+        if (gameState.phase !== 'RUNNING') return;
+        const touchEndX = e.changedTouches[0].clientX;
+        const diffX = touchEndX - touchStartX;
+        if (Math.abs(diffX) > 30) {
+            if (diffX < 0) moveRunnerLane(-1);
+            else moveRunnerLane(1);
+        }
+    }, {passive: true});
+}
+
+function moveRunnerLane(dir) {
+    if (gameState.mode === 'duel') return; // Lane movement disabled in duel for fairness
+    gameState.targetLane = Math.max(-1, Math.min(1, gameState.targetLane + dir));
+}
+
+function spawnSegmentObjects() {
+    roadObjects = [];
+    gateDistanceZ = 2200;
+
+    // In Solo mode, populate lane coins and obstacles along the 2000z track
+    if (gameState.mode === 'solo') {
+        for (let z = 300; z < 1900; z += 180) {
+            const lane = Math.floor(Math.random() * 3) - 1; // -1, 0, 1
+            const isObstacle = (z % 360 === 0);
+
+            if (isObstacle) {
+                roadObjects.push({ type: 'OBSTACLE', lane: lane, z: z, hit: false, kind: Math.floor(Math.random()*3) });
+            } else {
+                // Spawn row of coins
+                for (let c = 0; c < 3; c++) {
+                    roadObjects.push({ type: 'COIN', lane: lane, z: z + (c * 25), collected: false });
+                }
+            }
+        }
+    }
+}
+
+/* Pseudo-3D Projection Math */
+function project(x, y, z, width, height) {
+    const fov = 300; // Field of view depth
+    const cameraHeight = 140;
+    const scale = fov / (z + fov);
+
+    const projX = (width / 2) + (x * scale);
+    const projY = (height / 2) + (cameraHeight * scale) - (y * scale);
+    const projW = scale * width;
+
+    return { x: projX, y: projY, w: projW, scale: scale };
+}
+
+/* Main Render Loop */
+function gameLoop(timestamp) {
+    if (!canvas || !ctx) return;
+
+    // Update Physics & Distances
+    updateGameLogic();
+
+    // Render Canvas
+    render3DScene();
+
+    animFrameId = requestAnimationFrame(gameLoop);
+}
+
+function updateGameLogic() {
+    if (gameState.phase === 'RUNNING') {
+        speed = MAX_SPEED;
+        cameraZ += speed;
+        gameState.segmentTimer += 0.016;
+
+        // Smooth lane interpolation
+        const targetX = gameState.targetLane * 120;
+        gameState.runnerX += (targetX - gameState.runnerX) * 0.2;
+
+        // Check object collisions in Solo mode
+        if (gameState.mode === 'solo') {
+            roadObjects.forEach(obj => {
+                const distZ = obj.z - cameraZ;
+                if (distZ > 10 && distZ < 60) {
+                    if (obj.type === 'COIN' && !obj.collected) {
+                        const objX = obj.lane * 120;
+                        if (Math.abs(gameState.runnerX - objX) < 50) {
+                            obj.collected = true;
+                            gameState.p1.coins++;
+                            gameState.p1.score += 10;
+                            playSound('coin');
+                            updateHUD();
+                        }
+                    } else if (obj.type === 'OBSTACLE' && !obj.hit) {
+                        const objX = obj.lane * 120;
+                        if (Math.abs(gameState.runnerX - objX) < 50) {
+                            obj.hit = true;
+                            // Stumble slowdown
+                            gameState.runnerStumble = true;
+                            gameState.stumbleTimer = 20;
+                            speed = 4;
+                            playSound('wrong');
+                        }
+                    }
+                }
+            });
+        }
+
+        if (gameState.stumbleTimer > 0) {
+            gameState.stumbleTimer--;
+            if (gameState.stumbleTimer <= 0) gameState.runnerStumble = false;
+        }
+
+        // Check approach to Temple Gate
+        if (cameraZ >= gateDistanceZ - 350) {
+            gameState.phase = 'STOPPING_AT_GATE';
+        }
+
+    } else if (gameState.phase === 'STOPPING_AT_GATE') {
+        // Slow down smooth stop at gate
+        speed *= 0.88;
+        cameraZ += speed;
+        if (speed < 0.5) {
+            speed = 0;
+            gameState.phase = 'AT_GATE';
+            showQuestionPanel();
+        }
+    }
+}
+
+/* Render Canvas Graphics */
+function render3DScene() {
+    const w = canvas.width;
+    const h = canvas.height;
+
+    // Clear Canvas
+    ctx.clearRect(0, 0, w, h);
+
+    // 1. Sky Gradient & Horizon Fog
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.5);
+    skyGrad.addColorStop(0, '#0a2318');
+    skyGrad.addColorStop(0.7, '#1b4d3e');
+    skyGrad.addColorStop(1, '#3d7a66');
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, w, h * 0.5);
+
+    // Sun Rays
+    if (!gameState.lowPerf) {
+        ctx.fillStyle = 'rgba(255, 230, 150, 0.08)';
+        ctx.beginPath();
+        ctx.moveTo(w * 0.5, h * 0.2);
+        ctx.lineTo(0, h * 0.5);
+        ctx.lineTo(w, h * 0.5);
+        ctx.fill();
+    }
+
+    const horizonY = h * 0.45;
+
+    // 2. Ground Jungle Base
+    ctx.fillStyle = '#0f2413';
+    ctx.fillRect(0, horizonY, w, h - horizonY);
+
+    // 3. Pseudo-3D Mossy Stone Road & Stripes
+    const segmentLength = 80;
+    const totalSegments = 30;
+
+    for (let i = totalSegments; i >= 1; i--) {
+        const segZ = (Math.floor(cameraZ / segmentLength) + i) * segmentLength - cameraZ;
+        const nextSegZ = segZ + segmentLength;
+
+        if (segZ <= 10) continue;
+
+        const p1 = project(0, 0, segZ, w, h);
+        const p2 = project(0, 0, nextSegZ, w, h);
+
+        const roadWidth = 420;
+        const r1 = project(-roadWidth/2, 0, segZ, w, h);
+        const r2 = project(roadWidth/2, 0, segZ, w, h);
+        const r3 = project(roadWidth/2, 0, nextSegZ, w, h);
+        const r4 = project(-roadWidth/2, 0, nextSegZ, w, h);
+
+        // Alternating mossy stone road colors
+        const isDark = ((Math.floor(cameraZ / segmentLength) + i) % 2 === 0);
+        ctx.fillStyle = isDark ? '#3d4f3e' : '#4e634f';
+
+        ctx.beginPath();
+        ctx.moveTo(r1.x, r1.y);
+        ctx.lineTo(r2.x, r2.y);
+        ctx.lineTo(r3.x, r3.y);
+        ctx.lineTo(r4.x, r4.y);
+        ctx.fill();
+
+        // Road Borders / Moss Curb
+        ctx.fillStyle = '#1e2b1f';
+        ctx.beginPath();
+        ctx.moveTo(r1.x - (20 * p1.scale), r1.y);
+        ctx.lineTo(r1.x, r1.y);
+        ctx.lineTo(r4.x, r4.y);
+        ctx.lineTo(r4.x - (20 * p2.scale), r4.y);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(r2.x, r2.y);
+        ctx.lineTo(r2.x + (20 * p1.scale), r2.y);
+        ctx.lineTo(r3.x + (20 * p2.scale), r3.y);
+        ctx.lineTo(r3.x, r3.y);
+        ctx.fill();
+
+        // 3 Lane Divider Lines
+        ctx.strokeStyle = 'rgba(255, 215, 0, 0.25)';
+        ctx.lineWidth = Math.max(1, 2 * p1.scale);
+        const l1 = project(-roadWidth/6, 0, segZ, w, h);
+        const l1_n = project(-roadWidth/6, 0, nextSegZ, w, h);
+        const l2 = project(roadWidth/6, 0, segZ, w, h);
+        const l2_n = project(roadWidth/6, 0, nextSegZ, w, h);
+
+        ctx.beginPath();
+        ctx.moveTo(l1.x, l1.y); ctx.lineTo(l1_n.x, l1_n.y);
+        ctx.moveTo(l2.x, l2.y); ctx.lineTo(l2_n.x, l2_n.y);
+        ctx.stroke();
+
+        // Side Ancient Temple Pillars & Trees
+        if (!gameState.lowPerf && i % 3 === 0) {
+            drawPillar(r1.x - (60 * p1.scale), r1.y, p1.scale);
+            drawPillar(r2.x + (60 * p1.scale), r2.y, p1.scale);
+        }
+    }
+
+    // 4. Render Road Objects (Coins & Obstacles)
+    roadObjects.forEach(obj => {
+        const objZ = obj.z - cameraZ;
+        if (objZ > 10 && objZ < 1800) {
+            const objX = obj.lane * 120;
+            const p = project(objX, 0, objZ, w, h);
+
+            if (obj.type === 'COIN' && !obj.collected) {
+                drawCoin(p.x, p.y - (30 * p.scale), p.scale);
+            } else if (obj.type === 'OBSTACLE') {
+                drawObstacle(p.x, p.y, p.scale, obj.kind);
+            }
+        }
+    });
+
+    // 5. Render Ancient Temple Gate / Treasure Room
+    const gateZ = gateDistanceZ - cameraZ;
+    if (gateZ > 10 && gateZ < 2500) {
+        const gp = project(0, 0, gateZ, w, h);
+        const isFinalGate = (gameState.currentIndex >= 4 && gameState.phase === 'EVALUATING');
+        drawTempleGate(gp.x, gp.y, gp.scale, isFinalGate);
+    }
+
+    // 6. Horizon Fog Fade
+    const fogGrad = ctx.createLinearGradient(0, horizonY - 10, 0, horizonY + 80);
+    fogGrad.addColorStop(0, 'rgba(61, 122, 102, 0.95)');
+    fogGrad.addColorStop(1, 'rgba(15, 36, 19, 0)');
+    ctx.fillStyle = fogGrad;
+    ctx.fillRect(0, horizonY - 10, w, 90);
+
+    // 7. Render Runner Character (Back View)
+    const headBob = (!gameState.lowPerf && speed > 2) ? Math.sin(cameraZ * 0.08) * 6 : 0;
+    const runnerP = project(gameState.runnerX, headBob, 120, w, h);
+    drawRunner(runnerP.x, runnerP.y, runnerP.scale);
+
+    // 8. Render Pursuing Monster (Behind Camera / Bottom Screen)
+    const activeLives = (gameState.mode === 'solo') ? gameState.p1.lives : (gameState.activePlayer === 1 ? gameState.p1.lives : gameState.p2.lives);
+    drawMonsterOverlay(w, h, activeLives);
+
+    // Speed lines effect
+    if (speed > 10 && !gameState.lowPerf) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(10, h); ctx.lineTo(w * 0.2, horizonY);
+        ctx.moveTo(w - 10, h); ctx.lineTo(w * 0.8, horizonY);
+        ctx.stroke();
+    }
+}
+
+/* Drawing Helper Functions */
+function drawPillar(x, y, scale) {
+    const pw = 40 * scale;
+    const ph = 160 * scale;
+    ctx.fillStyle = '#2d382e';
+    ctx.fillRect(x - pw/2, y - ph, pw, ph);
+
+    // Moss highlights
+    ctx.fillStyle = '#166534';
+    ctx.fillRect(x - pw/2, y - ph, pw * 0.4, ph * 0.3);
+
+    // Cap
+    ctx.fillStyle = '#425243';
+    ctx.fillRect(x - pw*0.7, y - ph, pw * 1.4, 20 * scale);
+}
+
+function drawCoin(x, y, scale) {
+    const r = 16 * scale;
+    ctx.fillStyle = '#ffd700';
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ca8a04';
+    ctx.lineWidth = Math.max(1, 3 * scale);
+    ctx.stroke();
+
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${Math.max(8, 12 * scale)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🪙', x, y);
+}
+
+function drawObstacle(x, y, scale, kind) {
+    const ow = 90 * scale;
+    const oh = 40 * scale;
+
+    ctx.fillStyle = kind === 0 ? '#5c3a21' : (kind === 1 ? '#2563eb' : '#475569'); // Wood, Water, Rock
+    ctx.beginPath();
+    ctx.roundRect(x - ow/2, y - oh, ow, oh, 8 * scale);
+    ctx.fill();
+
+    ctx.fillStyle = '#fff';
+    ctx.font = `${Math.max(12, 22 * scale)}px sans-serif`;
+    ctx.textAlign = 'center';
+    const icon = kind === 0 ? '🪵' : (kind === 1 ? '🌊' : '🪨');
+    ctx.fillText(icon, x, y - oh/2);
+}
+
+function drawTempleGate(x, y, scale, isTreasureRoom) {
+    const gw = 500 * scale;
+    const gh = 450 * scale;
+
+    // Gate Arch Stone
+    ctx.fillStyle = isTreasureRoom ? '#ca8a04' : '#273829';
+    ctx.fillRect(x - gw/2, y - gh, gw, gh);
+
+    // Doorway opening
+    ctx.fillStyle = isTreasureRoom ? '#fef08a' : '#050d06';
+    ctx.beginPath();
+    ctx.arc(x, y - gh * 0.45, gw * 0.3, Math.PI, 0);
+    ctx.fillRect(x - gw * 0.3, y - gh * 0.45, gw * 0.6, gh * 0.45);
+    ctx.fill();
+
+    // Inscription text
+    ctx.fillStyle = '#ffd700';
+    ctx.font = `bold ${Math.max(12, 28 * scale)}px sans-serif`;
+    ctx.textAlign = 'center';
+    const label = isTreasureRoom ? 'RUANG HARTA 🏆' : `GERBANG MISI ${gameState.currentIndex + 1}`;
+    ctx.fillText(label, x, y - gh + (40 * scale));
+}
+
+function drawRunner(x, y, scale) {
+    const pColor = (gameState.mode === 'solo' || gameState.activePlayer === 1) ? gameState.p1.shirtColor : gameState.p2.shirtColor;
+
+    const rw = 50 * scale;
+    const rh = 85 * scale;
+
+    if (gameState.runnerStumble) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(-0.3);
+        ctx.fillStyle = pColor;
+        ctx.fillRect(-rw/2, -rh/2, rw, rh*0.7);
+        ctx.restore();
+        return;
+    }
+
+    // Legs (Animated swinging)
+    const legSwing = Math.sin(cameraZ * 0.12) * (20 * scale);
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 10 * scale;
+
+    ctx.beginPath();
+    ctx.moveTo(x - (12 * scale), y - (30 * scale));
+    ctx.lineTo(x - (15 * scale) + legSwing, y);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(x + (12 * scale), y - (30 * scale));
+    ctx.lineTo(x + (15 * scale) - legSwing, y);
+    ctx.stroke();
+
+    // Body (Shirt)
+    ctx.fillStyle = pColor;
+    ctx.beginPath();
+    ctx.roundRect(x - rw/2, y - rh + (20 * scale), rw, rh * 0.5, 6 * scale);
+    ctx.fill();
+
+    // Backpack
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(x - (rw * 0.35), y - rh + (25 * scale), rw * 0.7, rh * 0.35);
+
+    // Head (Back view - Hair)
+    ctx.fillStyle = '#451a03';
+    ctx.beginPath();
+    ctx.arc(x, y - rh + (12 * scale), 16 * scale, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function drawMonsterOverlay(w, h, lives) {
+    if (lives >= 3) return; // Distant/hidden
+
+    ctx.save();
+    if (lives === 2) {
+        // Shadow & glowing red eyes at bottom screen
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+        ctx.beginPath();
+        ctx.arc(w * 0.5, h + 20, w * 0.45, Math.PI, 0);
+        ctx.fill();
+
+        // Glowing Red Eyes
+        ctx.fillStyle = '#ef4444';
+        ctx.shadowColor = '#red';
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(w * 0.42, h - 35, 12, 0, Math.PI * 2);
+        ctx.arc(w * 0.58, h - 35, 12, 0, Math.PI * 2);
+        ctx.fill();
+
+    } else if (lives === 1) {
+        // Monster Head & Reaching Claws
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+        ctx.beginPath();
+        ctx.arc(w * 0.5, h + 50, w * 0.6, Math.PI, 0);
+        ctx.fill();
+
+        // Big Red Eyes
+        ctx.fillStyle = '#ff0000';
+        ctx.shadowColor = 'red';
+        ctx.shadowBlur = 25;
+        ctx.beginPath();
+        ctx.arc(w * 0.38, h - 70, 22, 0, Math.PI * 2);
+        ctx.arc(w * 0.62, h - 70, 22, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Monster Fangs
+        ctx.fillStyle = '#fff';
+        ctx.shadowBlur = 0;
+        ctx.beginPath();
+        ctx.moveTo(w*0.42, h - 20); ctx.lineTo(w*0.45, h + 10); ctx.lineTo(w*0.48, h - 20);
+        ctx.moveTo(w*0.52, h - 20); ctx.lineTo(w*0.55, h + 10); ctx.lineTo(w*0.58, h - 20);
+        ctx.fill();
+    }
+    ctx.restore();
+}
+
+/* ==========================================================================
+   GAMEPLAY FLOW & QUESTION LOGIC
+   ========================================================================== */
+function startSoloGame() {
+    initAudio();
+    const name = document.getElementById('p1-name').value.trim() || "Petualang";
+
+    gameState.mode = 'solo';
+    gameState.questions = shuffleArray(BANK_SOAL).slice(0, 5);
+    gameState.currentIndex = 0;
+    gameState.p1 = { name: name, lives: 3, coins: 0, score: 0, combo: 0, isCaught: false, history: [], shirtColor: '#dc2626' };
+
+    showScreen('screen-game');
+    document.getElementById('mobile-controls').style.display = 'flex';
+    initCanvas();
+    startSegment();
+}
+
+function startDuelGame() {
+    initAudio();
+    const p1Name = document.getElementById('duel-p1-name').value.trim() || "Pemain 1";
+    const p2Name = document.getElementById('duel-p2-name').value.trim() || "Pemain 2";
+
+    gameState.mode = 'duel';
+    gameState.questions = shuffleArray(BANK_SOAL).slice(0, 5);
+    gameState.currentIndex = 0;
+    gameState.duelTurn = 1;
+    gameState.activePlayer = 1;
+
+    gameState.p1 = { name: p1Name, lives: 3, coins: 0, score: 0, combo: 0, isCaught: false, history: [], shirtColor: '#ef4444' };
+    gameState.p2 = { name: p2Name, lives: 3, coins: 0, score: 0, combo: 0, isCaught: false, history: [], shirtColor: '#2563eb' };
+
+    showScreen('screen-game');
+    document.getElementById('mobile-controls').style.display = 'none'; // Lane controls disabled in duel
+    initCanvas();
+    startSegment();
+}
+
+function startSegment() {
+    cameraZ = 0;
+    speed = MAX_SPEED;
+    gameState.phase = 'RUNNING';
+    gameState.segmentTimer = 0;
+    gameState.runnerX = 0;
+    gameState.targetLane = 0;
+
+    spawnSegmentObjects();
+    updateHUD();
+
+    document.getElementById('question-panel').style.display = 'none';
+    document.getElementById('duel-handoff-overlay').style.display = 'none';
+
+    if (!animFrameId) {
+        animFrameId = requestAnimationFrame(gameLoop);
+    }
+}
+
+function showQuestionPanel() {
+    const q = gameState.questions[gameState.currentIndex];
+    const curP = (gameState.mode === 'solo' || gameState.activePlayer === 1) ? gameState.p1 : gameState.p2;
+
+    document.getElementById('question-panel').style.display = 'block';
+    document.getElementById('q-form').style.display = 'block';
+    document.getElementById('eval-content').style.display = 'none';
+
+    document.getElementById('q-mission-badge').innerText = `MISI ${gameState.currentIndex + 1}/5 - ${curP.name}`;
+    document.getElementById('q-combo-badge').innerText = curP.combo >= 2 ? `COMBO x${curP.combo}! 🔥` : '';
+    document.getElementById('q-text').innerText = q.soal;
+    document.getElementById('q-input').value = '';
+    document.getElementById('q-input').disabled = false;
+    document.getElementById('q-input').focus();
+}
+
+function handleAnswerSubmit(e) {
+    e.preventDefault();
+    const inputEl = document.getElementById('q-input');
+    const userAns = inputEl.value;
+    if (!userAns.trim()) return;
+
+    inputEl.disabled = true;
+    const q = gameState.questions[gameState.currentIndex];
+    const isTwoParts = (q.id === 10 || q.id === 11);
+
+    if (gameState.mode === 'solo') {
+        evaluateSoloAnswer(userAns, q, isTwoParts);
+    } else {
+        if (gameState.duelTurn === 1) {
+            gameState.tempP1Answer = userAns;
+            if (gameState.p2.isCaught) {
+                // P2 is out, evaluate directly
+                evaluateDuelRound(gameState.tempP1Answer, "-");
+            } else {
+                // Show handoff overlay
+                document.getElementById('question-panel').style.display = 'none';
+                document.getElementById('duel-handoff-overlay').style.display = 'block';
+                document.getElementById('handoff-msg').innerText = `Serahkan perangkat ke ${gameState.p2.name}, lalu tekan SIAP.`;
+            }
+        } else {
+            evaluateDuelRound(gameState.tempP1Answer, userAns);
+        }
+    }
+}
+
+function evaluateSoloAnswer(userAns, q, isTwoParts) {
+    const p = gameState.p1;
+    const isCorrect = checkAnswer(userAns, q.jawaban, isTwoParts);
+    let coinGain = 0;
+
+    if (isCorrect) {
+        playSound('correct');
+        p.combo++;
+        coinGain = 3 + (p.combo >= 2 ? 2 : 0);
+        p.coins += coinGain;
+        p.score += 20 + (coinGain * 10);
+    } else {
+        playSound('wrong');
+        p.combo = 0;
+        p.lives--;
+        gameState.runnerStumble = true;
+    }
+
+    p.history.push({ soal: q.soal, userAns: userAns, isCorrect: isCorrect, pembahasan: q.pembahasan });
+
+    updateHUD();
+    displayEvaluation(isCorrect, coinGain, q);
+}
+
+function confirmReadyHandoff() {
+    gameState.duelTurn = 2;
+    gameState.activePlayer = 2;
+    document.getElementById('duel-handoff-overlay').style.display = 'none';
+    showQuestionPanel();
+}
+
+function evaluateDuelRound(p1Ans, p2Ans) {
+    const q = gameState.questions[gameState.currentIndex];
+    const isTwoParts = (q.id === 10 || q.id === 11);
+
+    const p1 = gameState.p1;
+    const p2 = gameState.p2;
+
+    const p1Correct = !p1.isCaught && checkAnswer(p1Ans, q.jawaban, isTwoParts);
+    const p2Correct = !p2.isCaught && checkAnswer(p2Ans, q.jawaban, isTwoParts);
+
+    if (!p1.isCaught) {
+        if (p1Correct) {
+            p1.combo++;
+            let g = 3 + (p1.combo >= 2 ? 2 : 0);
+            p1.coins += g; p1.score += 20 + (g * 10);
+        } else {
+            p1.combo = 0; p1.lives--;
+            if (p1.lives <= 0) p1.isCaught = true;
+        }
+        p1.history.push({ soal: q.soal, userAns: p1Ans, isCorrect: p1Correct });
+    }
+
+    if (!p2.isCaught) {
+        if (p2Correct) {
+            p2.combo++;
+            let g = 3 + (p2.combo >= 2 ? 2 : 0);
+            p2.coins += g; p2.score += 20 + (g * 10);
+        } else {
+            p2.combo = 0; p2.lives--;
+            if (p2.lives <= 0) p2.isCaught = true;
+        }
+        p2.history.push({ soal: q.soal, userAns: p2Ans, isCorrect: p2Correct });
+    }
+
+    // Bonus duel
+    if (p1Correct && !p2Correct) { p1.coins += 1; p1.score += 10; playSound('correct'); }
+    else if (!p1Correct && p2Correct) { p2.coins += 1; p2.score += 10; playSound('correct'); }
+    else if (p1Correct && p2Correct) playSound('correct');
+    else playSound('wrong');
+
+    updateHUD();
+
+    // Show Eval
+    document.getElementById('question-panel').style.display = 'block';
+    document.getElementById('q-form').style.display = 'none';
+    document.getElementById('eval-content').style.display = 'block';
+
+    const evalBox = document.getElementById('eval-box');
+    evalBox.className = 'eval-box correct';
+    document.getElementById('eval-title').innerText = "EVALUASI DUEL RONDE";
+    document.getElementById('eval-msg').innerText = `Kunci Jawaban: ${q.jawaban[0]}`;
+    document.getElementById('eval-desc').innerHTML = `
+        <strong>${p1.name}:</strong> ${p1Correct ? 'BENAR ✅' : 'SALAH ❌'} ("${p1Ans}")<br>
+        <strong>${p2.name}:</strong> ${p2Correct ? 'BENAR ✅' : 'SALAH ❌'} ("${p2Ans}")<br><br>
+        <strong>Pembahasan:</strong> ${q.pembahasan}
+    `;
+}
+
+function displayEvaluation(isCorrect, coinGain, q) {
+    document.getElementById('q-form').style.display = 'none';
+    document.getElementById('eval-content').style.display = 'block';
+
+    const evalBox = document.getElementById('eval-box');
+    const evalTitle = document.getElementById('eval-title');
+    const evalMsg = document.getElementById('eval-msg');
+    const evalDesc = document.getElementById('eval-desc');
+
+    if (isCorrect) {
+        evalBox.className = 'eval-box correct';
+        evalTitle.className = 'badge badge-success';
+        evalTitle.innerText = 'GERBANG TERBUKA! BENAR!';
+        evalMsg.innerText = `+20 Poin | +${coinGain} Koin! 🪙`;
+        evalDesc.innerHTML = `<em>"Kamu melompat masuk dan monster tertinggal!"</em><br><br><strong>Pembahasan:</strong> ${q.pembahasan}`;
+    } else {
+        evalBox.className = 'eval-box wrong';
+        evalTitle.className = 'badge badge-danger';
+        evalTitle.innerText = 'TERSANDUNG! SALAH!';
+        evalMsg.innerText = `Jawaban Benar: ${q.jawaban[0]}`;
+        evalDesc.innerHTML = `<em>"Awas! Monster semakin dekat!"</em><br><br><strong>Pembahasan:</strong> ${q.pembahasan}`;
+    }
+
+    gameState.phase = 'EVALUATING';
+}
+
+function advanceSegment() {
+    if (gameState.mode === 'solo') {
+        if (gameState.p1.lives <= 0) {
+            finishGame(false);
+            return;
+        }
+        if (gameState.currentIndex + 1 >= 5) {
+            finishGame(true);
+            return;
+        }
+        gameState.currentIndex++;
+        startSegment();
+    } else {
+        // Duel Mode Advance
+        if ((gameState.p1.isCaught && gameState.p2.isCaught) || gameState.currentIndex + 1 >= 5) {
+            finishGame(true);
+            return;
+        }
+        gameState.currentIndex++;
+        gameState.duelTurn = 1;
+        gameState.activePlayer = gameState.p1.isCaught ? 2 : 1;
+        startSegment();
+    }
+}
+
+/* ==========================================================================
+   FINISH & SUMMARY
+   ========================================================================== */
+function finishGame(isWin) {
+    if (animFrameId) cancelAnimationFrame(animFrameId);
+    animFrameId = null;
+
+    showScreen('screen-result');
+    const resTitle = document.getElementById('res-title');
+    const resStars = document.getElementById('res-stars');
+    const resSubtitle = document.getElementById('res-subtitle');
+    const resDetails = document.getElementById('res-details');
+    const tableBody = document.getElementById('summary-table-body');
+    const btnContainer = document.getElementById('result-buttons-container');
+
+    tableBody.innerHTML = '';
+    btnContainer.innerHTML = '';
+
+    if (gameState.mode === 'solo') {
+        const p = gameState.p1;
+        if (p.lives > 0) {
+            playSound('win');
+            triggerConfetti();
+            resTitle.innerText = "🏆 MISI BERHASIL!";
+            resStars.innerText = "⭐".repeat(p.lives);
+            resSubtitle.innerText = `Selamat ${p.name}, Kamu Berhasil Mencapai Ruang Harta!`;
+        } else {
+            playSound('wrong');
+            resTitle.innerText = "👹 GAME OVER";
+            resTitle.style.color = "#ef4444";
+            resStars.innerText = "💔";
+            resSubtitle.innerText = "Monster menangkapmu di lorong candi!";
+        }
+
+        resDetails.innerHTML = `
+            <strong>Petualang:</strong> ${p.name}<br>
+            <strong>Skor Akhir:</strong> ${p.score}<br>
+            <strong>Total Koin:</strong> 🪙 ${p.coins}<br>
+            <strong>Gelar Hutan:</strong> ${getTitleByCoins(p.coins)}<br>
+            <strong>Sisa Nyawa:</strong> ${p.lives}/3
+        `;
+
+        p.history.forEach((h, idx) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${idx+1}</td><td>${h.soal}</td><td style="color:${h.isCorrect?'#22c55e':'#ef4444'}; font-weight:bold;">${h.isCorrect?'BENAR':'SALAH'}</td>`;
+            tableBody.appendChild(tr);
+        });
+
+        btnContainer.innerHTML = `
+            <button class="btn flex-1" onclick="startSoloGame()">MAIN LAGI 🔄</button>
+            <button class="btn btn-red flex-1" onclick="resetMenu(); showScreen('screen-menu');">MENU 🏠</button>
+        `;
+
+    } else {
+        // DUEL FINISH
+        const p1 = gameState.p1;
+        const p2 = gameState.p2;
+        let winnerStr = "";
+
+        if (p1.score > p2.score) winnerStr = `🏆 PEMENANG: ${p1.name}!`;
+        else if (p2.score > p1.score) winnerStr = `🏆 PEMENANG: ${p2.name}!`;
+        else winnerStr = "🤝 DUEL SERI! Kalian Sama Hebat!";
+
+        playSound('win');
+        triggerConfetti();
+
+        resTitle.innerText = winnerStr;
+        resStars.innerText = "⚔️";
+        resSubtitle.innerText = "Hasil Akhir Duel Candi";
+
+        resDetails.innerHTML = `
+            <div class="flex-row">
+                <div class="flex-1" style="border-right: 1px solid #3d5e40; padding-right: 5px;">
+                    <strong style="color:var(--p1-color);">${p1.name}</strong><br>
+                    Skor: ${p1.score} | Koin: 🪙${p1.coins}<br>
+                    Nyawa: ${p1.lives}/3 | ${getTitleByCoins(p1.coins)}
+                </div>
+                <div class="flex-1" style="padding-left: 5px;">
+                    <strong style="color:var(--p2-color);">${p2.name}</strong><br>
+                    Skor: ${p2.score} | Koin: 🪙${p2.coins}<br>
+                    Nyawa: ${p2.lives}/3 | ${getTitleByCoins(p2.coins)}
+                </div>
+            </div>
+        `;
+
+        const maxLen = Math.max(p1.history.length, p2.history.length);
+        for (let i = 0; i < maxLen; i++) {
+            const h1 = p1.history[i];
+            const h2 = p2.history[i];
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>R${i+1}</td>
+                <td>${gameState.questions[i] ? gameState.questions[i].soal : `Ronde ${i+1}`}</td>
+                <td>
+                    <span style="color:${h1&&h1.isCorrect?'#22c55e':'#ef4444'}">${p1.name}: ${h1?(h1.isCorrect?'✅':'❌'):'-'}</span><br>
+                    <span style="color:${h2&&h2.isCorrect?'#22c55e':'#ef4444'}">${p2.name}: ${h2?(h2.isCorrect?'✅':'❌'):'-'}</span>
+                </td>
+            `;
+            tableBody.appendChild(tr);
+        }
+
+        btnContainer.innerHTML = `
+            <button class="btn btn-blue flex-1" onclick="startDuelGame()">DUEL ULANG 🔄</button>
+            <button class="btn btn-red flex-1" onclick="resetMenu(); showScreen('screen-menu');">MENU 🏠</button>
+        `;
+    }
+}
+
+function triggerConfetti() {
+    const holder = document.getElementById('confetti-holder');
+    holder.innerHTML = '';
+    const colors = ['#ffd700', '#22c55e', '#3b82f6', '#ef4444', '#ec4899'];
+    for (let i = 0; i < 35; i++) {
+        const p = document.createElement('div');
+        p.className = 'confetti-piece';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        p.style.animationDuration = (2 + Math.random() * 2) + 's';
+        holder.appendChild(p);
+    }
+    setTimeout(() => { holder.innerHTML = ''; }, 4000);
+}
+</script>
+</body>
+</html>
